@@ -1,16 +1,13 @@
-
-
-
 import random
-import sys
-
-
+from tkinter import E
 
 class Deck():
+    def __repr__(self):
+        return str(self.cards)
     def __init__(self):
-        self.cards = []
-    def addCard(self,card):
-        self.cards.append(card)
+        self.cards = ["Empty","Empty","Empty","Empty","Empty"]
+    def addCard(self,card,pos):
+        self.cards[pos] = card
     def LeftToRight(self):
         return self.cards
     def RightToLeft(self):
@@ -25,6 +22,11 @@ class Deck():
                 t.append(self.cards[i])
         self.cards = t
         return item
+    def isFull(self):
+        for item in self.cards:
+            if item == "Empty":
+                return False
+        return True
 
 class Shop(Deck):
     def __init__(self) -> None:
@@ -35,9 +37,9 @@ class Shop(Deck):
         for i in range(0,size):
             n = random.randint(0,1)
             if n == 0:
-                self.addCard(Blank)
+                self.addCard(blank,i)
             else:
-                self.addCard(Joker)
+                self.addCard(joker,i)
     def rerollShop(self,size,tier):
         self.generateShop(size,tier)
         self.coins -= 1
@@ -48,7 +50,7 @@ class Shop(Deck):
     def displayShop(self):
         print(f"{self.LeftToRight()} | Coins={self.coins}")
     def buyItem(self,n):
-        if (self.coins >= 3 and len(playerDeck.cards) < 5) and len(self.cards) > 0:
+        if (self.coins >= 3 and playerDeck.isFull()) and len(self.cards) > 0:
             self.coins -= 3
             return self.removePos(n)
         return False
@@ -72,12 +74,12 @@ class Card():
         self.preAttAbility()
         enemy.takeDamage(self.damage)
         self.postAttAbility()
-    def die(self,cardList,other=None):
-        self.deathAbility(other)
+    def die(self,cardList=None,other=None):
+        self.deathAbility(cardList,other)
         cardList.remove(self)
         return cardList
 
-    def deathAbility(self):
+    def deathAbility(self,cardList,other):
         return
     def hurtAbility(self):
         return
@@ -97,16 +99,17 @@ class Joker(Card):
         super().__init__(name, sprite)
         self.damage = 3
         self.health = 1
-    def deathAbility(self,other=None):
+    def deathAbility(self,cardList,other):
         if other:
             other.health += 1
             other.damage += 3
+        return
 
 
 playerDeck = Deck()
 shop = Shop()
-Blank = Card("Blank","")
-Joker = Card("Joker","")
+blank = Card("Blank","")
+joker = Joker("Joker","")
 
 
 while True:
@@ -114,7 +117,7 @@ while True:
     shop.generateShop(3,0)
     shop.resetCoins()
     while shopping:
-        print(playerDeck.RightToLeft())
+        print(playerDeck)
         shop.displayShop()
         inp = input("What do you want to do? ")
         if inp.upper() == "E":
@@ -125,17 +128,22 @@ while True:
                     break
                 else:
                     print("Returned to Shop")
+            else:
+                shopping = False
+                break
         elif inp.upper() == "R":
             shop.rerollShop(3,0)
         else:
             inp = int(inp)
             item = shop.buyItem(inp)
+            pos = int(input("Position"))
             if item:
-                playerDeck.addCard(item)
+                playerDeck.addCard(item,pos)
             else:
                 print("Not Enough Coins or Too Many Cards")
     print(playerDeck.RightToLeft())
-    playerDeck.cards[1].die(playerDeck.cards)
+    playerDeck.cards[0].die(playerDeck.cards,other=playerDeck.cards[1])
+    print(playerDeck.RightToLeft())
     input()
 
 
